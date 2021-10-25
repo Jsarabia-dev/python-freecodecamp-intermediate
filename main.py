@@ -4,6 +4,7 @@ from loguru import logger
 
 from collections import Counter, namedtuple, OrderedDict, defaultdict, deque
 from itertools import *
+from functools import *
 import operator
 
 logger.add(sys.stderr, format="{time} {level} {message}", filter="python-intermediate", level="INFO")
@@ -418,8 +419,109 @@ def mainItertools():
     logger.info("list(a): {}", list(a))
     logger.info("list(acc_mul): {}", list(acc_mul))
 
-    separator("GROUPBY")  # Iterator que retorna key values
+    separator("GROUPBY")  # Iterator que retorna key y values a partir de un obj iterator
+
+    def smaller_than_3(x):
+        return x < 3
+
+    a = [1, 2, 3, 4]
+    group_obj = groupby(a, key=smaller_than_3)
+    for key, value in group_obj:
+        logger.info("Key: {} - Value: {}", key, list(value))
+
+    separator_line()
+
+    logger.info("group_obj_lambda")
+    group_obj_lambda = groupby(a, key=lambda x: x < 3)
+    for key, value in group_obj_lambda:
+        logger.info("Key: {} - Value: {}", key, list(value))
+
+    separator_line()
+
+    logger.info("group_obj_json")
+
+    persons = [
+        {'name': 'name1', 'edad': 18},
+        {'name': 'name2', 'edad': 8},
+        {'name': 'name3', 'edad': 2},
+        {'name': 'name4', 'edad': 25},
+        {'name': 'name5', 'edad': 25},
+    ]
+    group_obj_lambda = groupby(persons, key=lambda x: x['edad'])  # Agrupara por misma edad
+    logger.info(" > 18")
+    for key, value in group_obj_lambda:
+        logger.info("Key: {} - Value: {}", key, list(value))
+
+    separator_line()
+    separator("COUNT")
+
+    for i in count(10):  # Inicia desde 10 hasta infinito
+        logger.info(i)
+        if i == 15:
+            break
+
+    separator_line()
+    separator("CYCLE")
+    my_list = [1, 2, 3]
+    for i in cycle(my_list):  # Empiezar a itrear de forma infinita en toda la secuencia del iterable
+        logger.info(i)
+        break
+
+    separator_line()
+    separator("REPEAT")
+    for i in repeat(1):
+        logger.info(i)  # Repite 1 infinatemente
+        break
+
+    for i in repeat(2, 10):
+        logger.info(i)  # Repite 2 10 veces
+
+
+def mainLambda():  # lambda arguments: expression
+    separator("LAMBDA")
+    separator_line()
+    my_lamb = lambda x: x + 10
+    logger.info("my_lamb: {}", my_lamb(5))
+    separator_line()
+
+    my_mult_lamb = lambda x, y: x * y
+    logger.info("my_mult_lamb: {}", my_mult_lamb(5, 6))
+    separator_line()
+
+    points2d = [(1, 2), (15, 1), (5, -1), (10, 4)]
+    points2d_sorted = sorted(points2d, key=lambda x: x[1])  # Sorted como 2o arg espera saber por donde ordenar
+    logger.info("points2d: {}", points2d)
+    logger.info("points2d_sorted: {}", points2d_sorted)
+
+    separator_line()
+    logger.info("MAP")  # map(func, seq)
+    a = [1, 2, 3, 4, 5]
+    b = map(lambda x: x * 2, a)
+    logger.info("list(b): {}", list(b))
+
+    separator_line()
+    c = [x * 2 for x in a]  # Se obtiene el mismo resulta que arriba
+    logger.info("c: {}", c)
+
+    separator_line()
+    logger.info("FILTER")  # filter(func, seq)
+    a = [1, 2, 3, 4, 5, 6]
+    b = filter(lambda x: x % 2 == 0, a)
+    logger.info("b.filter: {}", list(b))
+
+    separator_line()
+    c = [x for x in a if x % 2 == 0]  # Filter 2
+    logger.info("c: {}", list(c))
+
+    separator_line()
+    logger.info("REDUCE")  # filter(func, seq)
+    a = [1, 2, 3, 4]
+    product_a = reduce(lambda x, y: x * y, a)
+    logger.info("product_a: {}", product_a)
+
+def mainExceptions():  # Errors and Exceptions
+    print("E")
 
 
 if __name__ == '__main__':
-    mainItertools()
+    mainLambda()
