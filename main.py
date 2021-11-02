@@ -7,6 +7,14 @@ from itertools import *
 from functools import *
 import operator
 
+from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
+import logging
+import logging.config
+import traceback
+import time
+import json
+import random
+import numpy as np
 logger.add(sys.stderr, format="{time} {level} {message}", filter="python-intermediate", level="INFO")
 
 
@@ -519,9 +527,215 @@ def mainLambda():  # lambda arguments: expression
     product_a = reduce(lambda x, y: x * y, a)
     logger.info("product_a: {}", product_a)
 
+
+class ValueToHighError(Exception):
+    pass
+
+
+class ValueToSmallError(Exception):
+    def __init__(self, message, value):
+        self.message = message
+        self.value = value
+
+
+def test_value(x):
+    if x > 100:
+        raise ValueToHighError('Value is to high')
+    if x < 5:
+        raise ValueToSmallError('Value is to high', x)
+
+
 def mainExceptions():  # Errors and Exceptions
-    print("E")
+    try:
+        test_value(3)
+    except ValueToHighError as e:
+        logger.error(e)
+    except ValueToSmallError as e:
+        logger.error(e.message)
+        logger.error(e.value)
+
+
+def mainLoggin():
+    # logging.basicConfig(
+    #     level=logging.DEBUG,
+    #     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    #     datefmt='%m/%d/%Y %H:%M:%S')
+    #
+    # logging.debug("This is a debug message")
+    # logging.info("This is a info message")
+    # logging.warning("This is a warning message")
+    # logging.error("This is a error message")
+    # logging.critical("This is a critical message")
+
+    separator_line()
+    logger = logging.getLogger(__name__)
+
+    # Create handler
+    stream_h = logging.StreamHandler()
+    file_h = logging.FileHandler('file.log')
+
+    # Level and the format
+    stream_h.setLevel(logging.WARNING)
+    file_h.setLevel(logging.ERROR)
+
+    # Formater
+    formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+
+    # Set formattter
+    stream_h.setFormatter(formatter)
+    file_h.setFormatter(formatter)
+
+    # Add handlers
+    logger.addHandler(stream_h)
+    logger.addHandler(file_h)
+
+    # loggers example
+    logger.warning('This is a warning')
+    logger.error('This is a error')
+
+    separator_line()
+    logger.warning("Config logger from file .conf")
+
+    # Then use the config file in the code
+
+    logging.config.fileConfig('logging.conf')
+
+    # create logger with the name from the config file.
+    # This logger now has StreamHandler with DEBUG Level and the specified format
+    logger = logging.getLogger('simpleExample')
+
+    logger.debug('debug message')
+    logger.info('info message')
+    import helper
+
+
+def mainLogginError():
+    # Loggear Execpcion especifica
+    try:
+        a = [1, 2, 3]
+        val = a[4]
+    except IndexError as e:
+        logging.error(e, exc_info=True)
+
+    # Loggear Execpcion especifica
+    try:
+        a = [1, 2, 3]
+        val = a[4]
+    except:
+        logging.error("The error is %s", traceback.format_exc())
+
+
+def mainLogginRotatingFile():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+
+    # Roll over after 2KB, and keep backup logs app.log.1 app.log.2 etc
+    handler = RotatingFileHandler('app.log', maxBytes=2000, backupCount=5)
+    logger.addHandler(handler)
+
+    for _ in range(10000):
+        logger.info('hello world')
+
+
+def mainLogginTimeRotatingFile():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+
+    # This will create a new log file every minute, and 5 backup files with a timestamp before overwriting old logs.
+    handler = TimedRotatingFileHandler('timed_test.log', when='s', interval=5, backupCount=5)
+    logger.addHandler(handler)
+
+    for _ in range(6):
+        logger.info('hello world')
+        time.sleep(5)
+
+
+def mainJson():
+    # Object to JSON
+    person = {"name": "John", "age": 30, "city": "New York", "hasChildren": False, "titles": ["engineer", "programmer"]}
+    personJSON = json.dumps(person, indent=2)
+    personJSON_separator = json.dumps(person, indent=2, separators=(': ', '= '))
+    personJSON_key = json.dumps(person, indent=2, sort_keys=True)  # Sort by abc
+    logger.info("personJSON: " + personJSON)
+    logger.info("personJSON_separator: " + personJSON_separator)
+    logger.info("personJSON_key: " + personJSON_key)
+
+    # Object to JSON.file
+    with open('person.json', 'w') as file:
+        json.dump(person, file, indent=2)
+
+    person_dict = json.loads(personJSON)
+    logger.info("person_dict: ")
+    logger.info(person_dict)
+
+    with open('person.json', 'r') as file:
+        person_from_file = json.load(file)
+        logger.info("person_from_file: ")
+        logger.info(person_from_file)
+
+
+class User:
+    # Custom class with all instance variables given in the __init__()
+    def __init__(self, name, age, active, balance, friends):
+        self.name = name
+        self.age = age
+        self.active = active
+        self.balance = balance
+        self.friends = friends
+
+
+def enconde_user(obj):
+    if isinstance(obj, User):
+        return {"name": obj.name, "age": obj.age, "type": obj.__class__.__name__}
+    else:
+        raise TypeError('Object of type User is not JSON serializablr')
+
+
+def class_to_json():
+    user = User('Max', 28, 1, 12, 'panas')
+    userJson = json.dumps(user, default=enconde_user)
+    logger.info("userJson: ")
+    logger.info(userJson)
+
+
+def MainRandom():
+    random_random = random.random()
+    logger.info("random_random")
+    logger.info(random_random)
+
+    random_uniform = random.uniform(1, 10)  # 10 NO esta incluido
+    logger.info("random_uniform")
+    logger.info(random_uniform)
+
+    random_normalvariate = random.normalvariate(0, 1)  # Valores negativos y positivo
+    logger.info("random_normalvariate")
+    logger.info(random_normalvariate)
+
+    mylist = list("ABCDEFG")
+    random_choice = random.choice(mylist)
+    logger.info("random_choice")
+    logger.info(random_choice)
+
+    random_sample = random.sample(mylist, 3)  # Devuelve 3 valores, NO repetidos
+    logger.info("random_sample")
+    logger.info(random_sample)
+
+    random_choice = random.choices(mylist, k=3)  # Devuelve 3 valores, repetidos
+    logger.info("random_choice")
+    logger.info(random_choice)
+
+    random.shuffle(mylist)
+    logger.info("mylist.random_shuffle")
+    logger.info(mylist)
+
+    random_rand = np.random.rand(3)
+    logger.info("random_rand")
+    logger.info(random_rand)
+
+    random_randint = np.random.randint(0, 10, (3, 4))  # Una tupla de 3 dimensiones
+    logger.info("random_randint")
+    logger.info(random_randint)
 
 
 if __name__ == '__main__':
-    mainLambda()
+    MainRandom()
