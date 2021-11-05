@@ -1,6 +1,6 @@
 import time
 from multiprocessing import Process
-from threading import Thread
+from threading import Thread, Lock
 from loguru import logger
 import os
 
@@ -56,7 +56,7 @@ def threading():
 database_value = 0
 
 
-def increase():
+def increase_bad():
     global database_value  # needed to modify the global value
 
     # get a local copy (simulate data retrieving)
@@ -70,12 +70,31 @@ def increase():
     database_value = local_copy
 
 
-def threading_modify_data():
-    logger.info("Share data between threads")
+# LOCK
+def increase_lock(lock):
+    global database_value
+
+    # lock the state
+    lock.acquire()
+
+    local_copy = database_value
+    local_copy += 1
+    time.sleep(0.1)
+    database_value = local_copy
+
+    # unlock the state
+    lock.release()
+
+
+def threading_lock():
+    # create a lock
+    lock = Lock()
+
     print('Start value: ', database_value)
 
-    t1 = Thread(target=increase)
-    t2 = Thread(target=increase)
+    # pass the lock to the target function
+    t1 = Thread(target=increase_lock, args=(lock,))  # notice the comma after lock since args must be a tuple
+    t2 = Thread(target=increase_lock, args=(lock,))
 
     t1.start()
     t2.start()
@@ -88,6 +107,18 @@ def threading_modify_data():
     print('end main')
 
 
+# WITH LOCK - Recommended form
+def increase_with_lock(lock):
+    global database_value
+
+    with lock:
+        local_copy = database_value
+        local_copy += 1
+        time.sleep(0.1)
+        database_value = local_copy
+
+
 if __name__ == "__main__":
     # multiprocessing()
-    threading()
+    # threading()
+    threading_lock()
